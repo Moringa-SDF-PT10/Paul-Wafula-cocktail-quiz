@@ -1,66 +1,62 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #f8cdda 0%, #1d2b64 100%);
-      color: #fff;
-      text-align: center;
-      padding: 2rem;
-      margin: 0;
-    }
-    #quiz-container {
-      max-width: 700px;
-      margin: auto;
-      background: #ffffff10;
-      backdrop-filter: blur(10px);
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-    button {
-      margin-top: 1rem;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 0.5rem;
-      background-color: #ff69b4;
-      color: white;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background-color: #ff1493;
-    }
-    .option {
-      display: block;
-      margin: 1rem auto;
-      padding: 0.75rem;
-      border: 1px solid #fff;
-      border-radius: 0.5rem;
-      background-color: #ffffff15;
-      cursor: pointer;
-      max-width: 80%;
-      transition: background 0.3s;
-    }
-    .option:hover {
-      background-color: #ffffff30;
-    }
-    select {
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      border-radius: 0.5rem;
-      border: none;
-      font-size: 1rem;
-    }
-    img.glass-icon, img.drink-thumb {
-      width: 50px;
-      height: auto;
-      margin: 0.5rem;
-      border-radius: 0.5rem;
-    }
-    #timer {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-    }
+.container {
+  text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2rem;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+button {
+  margin-top: 1rem;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#start-btn, #next-btn {
+  background-color: #ffffff;
+  color: #f5576c;
+}
+
+button:hover {
+  background-color: #fcdff2;
+}
+
+.answer-btn {
+  display: block;
+  margin: 0.5rem auto;
+  background-color: #fff;
+  color: #333;
+  width: 80%;
+}
+
+.correct {
+  background-color: #4caf50 !important;
+  color: white;
+}
+
+.incorrect {
+  background-color: #e53935 !important;
+  color: white;
+}
+
+.hidden {
+  display: none;
+}
+

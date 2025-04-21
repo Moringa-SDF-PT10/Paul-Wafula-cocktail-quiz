@@ -1,149 +1,91 @@
-const quizContent = document.getElementById("quiz-content");
 const startBtn = document.getElementById("start-btn");
-const categorySelect = document.getElementById("category");
+const nextBtn = document.getElementById("next-btn");
+const quizEl = document.getElementById("quiz");
+const questionEl = document.getElementById("question");
+const answersEl = document.getElementById("answers");
 
+let cocktails = [];
+let currentQuestionIndex = 0;
 let score = 0;
-let questionCount = 0;
-let timerInterval;
-let timeLeft = 15;
-let totalTime = 0;
-const maxQuestions = 5;
 
-startBtn.addEventListener("click", () => {
-  score = 0;
-  questionCount = 0;
-  totalTime = 0;
-  nextQuestion();
+startBtn.addEventListener("click", async () => {
+  startBtn.classList.add("hidden");
+  quizEl.classList.remove("hidden");
+  await fetchCocktails();
+  showQuestion();
 });
 
-function startTimer(callback) {
-  clearInterval(timerInterval);
-  timeLeft = 15;
-  const timerEl = document.createElement('div');
-  timerEl.id = 'timer';
-  quizContent.prepend(timerEl);
-  timerInterval = setInterval(() => {
-    timerEl.textContent = `⏱ Time left: ${timeLeft}s`;
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      callback();
-    }
-    timeLeft--;
-    totalTime++;
-  }, 1000);
-}
-
-async function nextQuestion() {
-  questionCount++;
-  if (questionCount > maxQuestions) return showFinalScore();
-  const selectedCategory = categorySelect.value;
-  quizContent.innerHTML = '<p>Loading question...</p>';
-  const res = await fetch('https://www.thecocktaildb.com/api/json/v1/1/random.php');
-  const data = await res.json();
-  const drink = data.drinks[0];
-  let question = '', options = [], correctAnswer = '';
-
-  const ingredients = [];
-  for (let i = 1; i <= 15; i++) {
-    const ing = drink[`strIngredient${i}`];
-    if (ing) ingredients.push(ing);
+async function fetchCocktails() {
+  try {
+    const res = await fetch("https://www.thecocktaildb.com/api/json/v1/1/filter.php?a=Alcoholic");
+    const data = await res.json();
+    cocktails = data.drinks.slice(0, 10);
+  } catch (err) {
+    questionEl.textContent = "Error loading data.";
   }
+}
 
-  switch (selectedCategory) {
-    case 'ingredients': {
-      const fake = await getFakeIngredient(ingredients);
-      options = shuffleArray([...ingredients.slice(0, 3), fake]);
-      correctAnswer = fake;
-      question = `Which ingredient is NOT in a ${drink.strDrink}?`;
-      break;
-    }
-    case 'glass': {
-      const allGlasses = ['Cocktail glass', 'Highball glass', 'Old-fashioned glass', 'Collins glass'];
-      correctAnswer = drink.strGlass;
-      options = shuffleArray([correctAnswer, ...allGlasses.filter(g => g !== correctAnswer).slice(0, 3)]);
-      question = `Which glass is used for ${drink.strDrink}?`;
-      break;
-    }
-    case 'alcoholic': {
-      const allOptions = ['Alcoholic', 'Non alcoholic', 'Optional alcohol'];
-      correctAnswer = drink.strAlcoholic;
-      options = shuffleArray(allOptions);
-      question = `Is ${drink.strDrink} alcoholic?`;
-      break;
-    }
-    case 'image': {
-      correctAnswer = drink.strDrink;
-      const drinkNames = [correctAnswer];
-      for (let i = 0; i < 3; i++) {
-        const fakeDrink = await getRandomDrink();
-        drinkNames.push(fakeDrink.strDrink);
-      }
-      options = shuffleArray(drinkNames);
-      question = `Which cocktail is this?`;
-      break;
-    }
+function showQuestion() {
+  resetState();
+  const current = cocktails[currentQuestionIndex];
+  questionEl.textContent = `Which cocktail is called: "${current.strDrink}"?`;
+
+  const correct = current.strDrink;
+  const options = generateOptions(correct);
+
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.textContent = opt;
+    btn.classList.add("answer-btn");
+    if (opt === correct) btn.dataset.correct = true;
+    btn.addEventListener("click", selectAnswer);
+    answersEl.appendChild(btn);
+  });
+}
+
+function generateOptions(correct) {
+  const opts = [correct];
+  while (opts.length < 4) {
+    const rand = cocktails[Math.floor(Math.random() * cocktails.length)].strDrink;
+    if (!opts.includes(rand)) opts.push(rand);
   }
+  return opts.sort(() => Math.random() - 0.5);
+}
 
-  setTimeout(() => {
-    let imgHTML = '';
-    if (selectedCategory === 'glass' && drink.strGlass) {
-      imgHTML = `<p><img src="https://www.thecocktaildb.com/images/media/drink/${drink.strGlass.replace(/ /g, '_').toLowerCase()}.png" class="glass-icon" onerror="this.style.display='none';"></p>`;
+function selectAnswer(e) {
+  const correct = e.target.dataset.correct === "true";
+  if (correct) score++;
+
+  Array.from(answersEl.children).forEach(btn => {
+    btn.disabled = true;
+    if (btn.dataset.correct) {
+      btn.classList.add("correct");
+    } else {
+      btn.classList.add("incorrect");
     }
-    if (selectedCategory === 'image') {
-      imgHTML = `<p><img src="${drink.strDrinkThumb}" class="drink-thumb"></p>`;
-    }
+  });
 
-    quizContent.innerHTML = `
-      ${imgHTML}
-      <h2>${question}</h2>
-      ${options.map(opt => `<div class="option" onclick="checkAnswer('${opt}', '${correctAnswer}')">${opt}</div>`).join('')}
-      <p>Question ${questionCount} of ${maxQuestions}</p>
-      <button onclick="nextQuestion()">Next Question</button>
-    `;
-
-    startTimer(() => {
-      alert('⏰ Time is up!');
-      nextQuestion();
-    });
-  }, 500);
+  nextBtn.classList.remove("hidden");
 }
 
-async function getFakeIngredient(realIngredients) {
-  const res = await fetch('https://www.thecocktaildb.com/api/json/v1/1/list.php?i=list');
-  const data = await res.json();
-  const allIngredients = data.drinks.map(d => d.strIngredient1);
-  let fake;
-  do {
-    fake = allIngredients[Math.floor(Math.random() * allIngredients.length)];
-  } while (realIngredients.includes(fake));
-  return fake;
-}
-
-async function getRandomDrink() {
-  const res = await fetch('https://www.thecocktaildb.com/api/json/v1/1/random.php');
-  const data = await res.json();
-  return data.drinks[0];
-}
-
-function checkAnswer(selected, correct) {
-  clearInterval(timerInterval);
-  if (selected === correct) {
-    score++;
-    alert("Correct! 🎉");
+nextBtn.addEventListener("click", () => {
+  currentQuestionIndex++;
+  if (currentQuestionIndex < cocktails.length) {
+    showQuestion();
   } else {
-    alert(`Wrong! Correct answer was: ${correct}`);
+    showResults();
   }
+});
+
+function resetState() {
+  nextBtn.classList.add("hidden");
+  answersEl.innerHTML = "";
 }
 
-function showFinalScore() {
-  quizContent.innerHTML = `
-    <h2>Your score: ${score}/${maxQuestions}</h2>
-    <p>Total time: ${totalTime} seconds</p>
-    <button onclick="location.reload()">Restart Quiz</button>
-  `;
+function showResults() {
+  questionEl.textContent = `🎉 Quiz Complete! You scored ${score}/${cocktails.length}`;
+  answersEl.innerHTML = "";
+  nextBtn.classList.add("hidden");
 }
 
-function shuffleArray(arr) {
-  return arr.sort(() => Math.random() - 0.5);
-}
 
